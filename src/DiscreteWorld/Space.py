@@ -1,23 +1,30 @@
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 
 class Space:
     """
-    Attributes
-    __________
+    Abstract class for the space of an discrete MDP.
 
+    Attributes
+    _________
     A: set
+        Set of accions
     S: set
+        Set of states
     T: int
-    A_s: function
+        Time Horizon
+
+    Methods
+    _______
+    adm_A
         Function that given a (time, state) tuple returns the set of admisible actions for that pair
-    Q: function
+    Q
         Function that given a (state, action) tuple returns the probability distribution of the next state
 
     """
-    def __init__(self, Actions, States, time_horizon):
-        self.A = Actions
-        self.S = States
+    def __init__(self, actions, states, time_horizon):
+        self.A = actions
+        self.S = states
         self.T = time_horizon
         self.adm_A = NotImplemented
         self.Q = NotImplemented
@@ -26,8 +33,14 @@ class Space:
 
     @abstractmethod
     def build_admisible_actions(self):
+        """
+        Abstract method that builds the admisible actions function and stores it in self.adm_A
+        """
         ...
 
     @abstractmethod
     def build_kernel(self):
+        """
+        Abstract method that builds the stochastic kernel and stores it in self.Q
+        """
         ...
