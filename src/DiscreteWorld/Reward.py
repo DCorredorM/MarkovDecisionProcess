@@ -23,6 +23,7 @@ class Reward:
         Function that given a (state, action) tuple returns the probability distribution of the next state
     """
     def __init__(self, space: Space):
+        self.space = space
         self.A = space.A
         self.S = space.S
         self.adm_A = space.adm_A

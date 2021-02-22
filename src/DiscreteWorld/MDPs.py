@@ -28,6 +28,9 @@ class MDP:
         Function that given a (t, state, action) tuple returns the reward.
     """
     def __init__(self, space: Space, reward: Reward):
+        self.space = space
+        self.reward = reward
+
         self.A = space.A
         self.S = space.S
         self.adm_A = space.adm_A
