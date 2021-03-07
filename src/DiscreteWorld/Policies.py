@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from treelib import Node, Tree
+from DiscreteWorld.Space import finiteTimeSpace
 
 
 class Policy:
@@ -27,7 +28,10 @@ class Policy:
         self.S = space.S
         self.adm_A = space.adm_A
         self.Q = space.Q
-        self.T = space.T
+
+        if finiteTimeSpace in space.__class__.__bases__:
+            self.T = space.T
+
         self.tree = None
 
     def __call__(self, history):
@@ -51,9 +55,9 @@ class Policy:
         ...
 
 
-class DMPolicy(Policy):
+class DMNSPolicy(Policy):
     """
-    Representation of a deterministic markovian policy.
+    Representation of a deterministic markovian non-stationary policy.
 
     Deterministic markovian means that the the act method returns only an action, and that the relevant history consists
     only in the current state.
@@ -153,3 +157,67 @@ class DMPolicy(Policy):
         self.policy = policy
         if initial_state is not None:
             self._create_tree(initial_state)
+
+
+class DMSPolicy(Policy):
+    """
+    Representation of a deterministic markovian policy stationary.
+
+    Deterministic markovian means that the the act method returns only an action, and that the relevant history consists
+    only in the current state.
+
+    Attributes
+    __________
+    policy: dict
+        A dictionary with the deterministic markovian policy.
+
+    """
+    def __init__(self, space):
+        super().__init__(space)
+        self.policy = {}
+        self.S = list(self.S)
+
+
+    def __repr__(self):
+        st = str(self.tree.show())
+        return st
+
+    def act(self, state):
+        """
+
+        Parameters
+        ----------
+        state
+            the state
+
+        Returns
+        -------
+            the action
+        """
+
+        return self.policy[state]
+
+    def add_action(self, state, action):
+        """
+        Add an action to the policy.
+
+        Parameters
+        ----------
+        state: State
+            State
+        action: Action
+            Action
+        """
+        # assert state in self.S and action in self.A
+        self.policy[state] = action
+
+    def add_policy(self, policy):
+        """
+        Adds a complete policy
+
+        Parameters
+        ----------
+        policy: dict
+            Policy to add
+        """
+        self.policy = policy

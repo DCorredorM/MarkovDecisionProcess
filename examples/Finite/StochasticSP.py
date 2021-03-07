@@ -1,10 +1,10 @@
-from DiscreteWorld.Space import Space
-from DiscreteWorld.Reward import Reward
-from DiscreteWorld.MDPs import DeterministicMarkovian
+from DiscreteWorld.Space import finiteTimeSpace
+from DiscreteWorld.Reward import finiteTimeReward
+from DiscreteWorld.MDPs import finiteTime
 import networkx as nx
 
 
-class SSP_space(Space):
+class SSP_space(finiteTimeSpace):
 	def __init__(self, actions, states, time_horizon, G):
 		super(SSP_space, self).__init__(actions, states, time_horizon)
 		self.G = G
@@ -38,7 +38,7 @@ class SSP_space(Space):
 		self.Q = Q
 
 
-class SSP_reward(Reward):
+class SSP_reward(finiteTimeReward):
 	def __init__(self, space):
 		super().__init__(space)
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 	# Create the reward object
 	ssp_reward = SSP_reward(ssp_space)
 
-	mdp = DeterministicMarkovian(ssp_space, ssp_reward)
+	mdp = finiteTime(ssp_space, ssp_reward)
 
 	# Solves the MDP and stores its solution
 	S0 = 1

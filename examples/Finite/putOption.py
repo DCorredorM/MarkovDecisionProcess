@@ -1,12 +1,12 @@
-from DiscreteWorld.Space import Space
-from DiscreteWorld.Reward import Reward
-from DiscreteWorld.MDPs import DeterministicMarkovian
+from DiscreteWorld.Space import finiteTimeSpace
+from DiscreteWorld.Reward import finiteTimeReward
+from DiscreteWorld.MDPs import finiteTime
 from math import exp
 import matplotlib.pyplot as plt
 from functools import reduce
 
 
-class putOptionSpace(Space):
+class putOptionSpace(finiteTimeSpace):
 	"""
     Implements the space class for the put option MDP
     """
@@ -45,7 +45,7 @@ class putOptionSpace(Space):
 		self.Q = Q
 
 
-class putOptionReward(Reward):
+class putOptionReward(finiteTimeReward):
 	"""
     Implements the reward class for the put option MDP.
     """
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 	# Creates the Reward object for the put option MDP
 	put_reward = putOptionReward(put_space, strike=strike_p, discount_rate=r, transaction_cost=tau)
 	# Creates the MDP object with the proper space and reward objects
-	mdp = DeterministicMarkovian(put_space, put_reward)
+	mdp = finiteTime(put_space, put_reward)
 	# Solves the MDP and stores its solution
 	pol, v = mdp.solve(S0)
 	# Prints the value of
