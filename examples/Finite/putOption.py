@@ -84,7 +84,7 @@ class putOptionReward(finiteTimeReward):
 
 def plot_put_policy(mdp, S0):
 	pol = mdp.policy
-	T = range(mdp.T)
+	T = range(mdp.total_time)
 	tau = []
 	for ti in T:
 		l = [p for (t, p), a in pol.policy.items() if t == ti and a == 'Exercise']
@@ -104,18 +104,18 @@ def plot_put_policy(mdp, S0):
 	ax.plot(T, tau, '-o', label='Policy')
 	ax.plot(T, min_price, c='r', label='Minimum price')
 	ax.plot(T, max_price, c='g', label='Maximum price')
-	ax.hlines(y=mdp.reward.strike, xmin=0, xmax=mdp.T, colors='black', linestyles='--', label='Strike price')
+	ax.hlines(y=mdp.reward.strike, xmin=0, xmax=mdp.total_time, colors='black', linestyles='--', label='Strike price')
 	ax.legend()
 
 	prob = compute_distribution(mdp, S0)
-	pronT = prob[mdp.T - 1]
+	pronT = prob[mdp.total_time - 1]
 	axh.barh(list(pronT.keys()), list(pronT.values()), height=(mdp.space.u + mdp.space.d) / 3, color='black', alpha=0.6)
 	plt.show()
 
 
 def compute_distribution(mdp, S0):
 	p = {(0, S0): 1}
-	T = mdp.T
+	T = mdp.total_time
 
 	def S(n_u, n_d):
 		return round(S0 + n_u * mdp.space.u - n_d * mdp.space.d, 2)
@@ -146,7 +146,7 @@ def compute_distribution(mdp, S0):
 	for possible_end in nodes[T]:
 		pt(T, possible_end)
 
-	by_epoche = {t: {s: pr for (tt, s), pr in p.items() if tt == t} for t in range(mdp.T)}
+	by_epoche = {t: {s: pr for (tt, s), pr in p.items() if tt == t} for t in range(mdp.total_time)}
 	return by_epoche
 
 

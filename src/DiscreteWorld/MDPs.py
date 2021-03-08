@@ -194,13 +194,13 @@ class infiniteTime(MDP):
         self._rs = dict()
 
         self.computing_times = {'preprocess': Timer('preprocess'),
-                                'Value_Iteration': Timer('Value_Iteration'),
-                                'Jacobi': Timer('Jacobi'),
-                                'Gauss-Seidel': Timer('Gauss-Seidel')}
+                                'VI': Timer('VI'),
+                                'JAC': Timer('JAC'),
+                                'GS': Timer('GS')}
 
-        self.iteration_counts = {'Value_Iteration': Tally('Value_Iteration'),
-                                 'Jacobi': Tally('Jacobi'),
-                                 'Gauss-Seidel': Tally('Gauss-Seidel')}
+        self.iteration_counts = {'VI': Tally('VI'),
+                                 'JAC': Tally('JAC'),
+                                 'GS': Tally('GS')}
 
         self.computing_times['preprocess'].start()
         self._preprocess()
@@ -358,7 +358,7 @@ class infiniteTime(MDP):
             v[i] = v_i
         return pol, v_r
 
-    def optimal_value(self, v_0=None, epsilon=1E-2, method='Gauss-Seidel'):
+    def optimal_value(self, v_0=None, epsilon=1E-2, method='GS'):
         """
         Computes the value function for the problem and creates the optimal policy.
 
@@ -374,8 +374,8 @@ class infiniteTime(MDP):
             The value function for the given time and state.
         """
 
-        L = self.improvement_VI if method == 'Value_Iteration' else \
-            self.improvement_JAC if method == 'Jacobi' else self.improvement_GS
+        L = self.improvement_VI if method == 'VI' else \
+            self.improvement_JAC if method == 'JAC' else self.improvement_GS
 
         self.computing_times[method].start()
 
@@ -384,11 +384,13 @@ class infiniteTime(MDP):
 
         vt = v_0.copy()
         self.a_policy, self.v = self.improvement_VI(vt)
+        stop = np.sqrt(np.dot((self.v - vt).T, self.v - vt))
 
-        while np.sqrt(np.dot((self.v - vt).T, self.v - vt)) > epsilon*(1 - self._lambda)/(2 * self._lambda):
+        while stop > epsilon*(1 - self._lambda) / (2 * self._lambda):
             vt = self.v.copy()
             self.a_policy, self.v = L(self.v)
-            self.iteration_counts[method].count()
+            stop = np.sqrt(np.dot((self.v - vt).T, self.v - vt))
+            self.iteration_counts[method].add(vt)
 
         self.computing_times[method].stop()
 

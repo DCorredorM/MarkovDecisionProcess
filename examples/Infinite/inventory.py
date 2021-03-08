@@ -1,8 +1,12 @@
 from DiscreteWorld.Space import infiniteTimeSpace
 from DiscreteWorld.Reward import infiniteTimeReward
 from DiscreteWorld.MDPs import infiniteTime
-
+from Utilities.counters import Timer
 import matplotlib.pyplot as plt
+from matplotlib import cm
+import matplotlib as mpl
+from matplotlib.colors import ListedColormap,LinearSegmentedColormap
+
 from Utilities.utilities import norm
 
 import numpy as np
@@ -76,22 +80,25 @@ class inventoryReward(infiniteTimeReward):
 	Implements the reward class for the put option MDP.
 	"""
 
-	def __init__(self, space: inventorySpace, f, c, h, K):
+	def __init__(self, space: inventorySpace, f, c, h, K, _lambda, lambda_e_1=False):
 		super().__init__(space)
 		self.h = h
 		self.c = c
 		self.f = f
 		self.K = K
+		self._lambda = _lambda
 
 		self.O = dict()
 		self.F = dict()
 		self.rew = dict()
+		self.lambda_e_1 = lambda_e_1
 		self.build_reward()
+
 
 	def build_reward(self):
 		for s in self.S:
 			self.F[s] = sum(self.f(j) * self.space.dem_distr.pmf(j) for j in range(s)) \
-						+ f(s) * (1 - self.space.dem_distr.cdf(s - 1))
+			            + self.f(s) * (1 - self.space.dem_distr.cdf(s - 1))
 
 			for a in self.adm_A(s):
 				if a not in self.O.keys():
@@ -99,8 +106,10 @@ class inventoryReward(infiniteTimeReward):
 
 				if s + a not in self.F.keys():
 					self.F[s + a] = sum(self.f(j) * self.space.dem_distr.pmf(j) for j in range(s + a)) \
-									+ f(s + a) * (1 - self.space.dem_distr.cdf(s + a - 1))
+					                + self.f(s + a) * (1 - self.space.dem_distr.cdf(s + a - 1))
 				self.rew[s, a] = self.F[s + a] - self.O[a] - self.h(s + a)
+				if self.lambda_e_1:
+					self.rew[s, a] *= (1 - self._lambda)
 
 	def reward(self, state, action=None):
 		"""
@@ -122,10 +131,238 @@ class inventoryReward(infiniteTimeReward):
 		return self.rew[state, action]
 
 
+def plot_f1():
+	inv_mdp = base_case()
+	V_VI = inv_mdp.iteration_counts['VI'].List
+	V_JAC = inv_mdp.iteration_counts['JAC'].List
+	V_GS = inv_mdp.iteration_counts['GS'].List
+
+	y1 = [norm(v_VI - v) for v in V_VI]
+	y2 = [norm(v_JAC - v) for v in V_JAC]
+	y3 = [norm(v_GS - v) for v in V_GS]
+
+	x1 = range(len(y1))
+	x2 = range(len(y2))
+	x3 = range(len(y3))
+
+	plt.plot(x1, y1, label='Value iteration')
+	plt.plot(x2, y2, label='Jacobi')
+	plt.plot(x3, y3, label='Gauss-Seidel')
+
+	plt.legend()
+	plt.xlabel(r'$n$')
+	plt.ylabel(r'$||v^n -v^*_\lambda||$')
+	plt.show()
+
+
+def base_case(log=False):
+	def f(s):
+		return 10 * s
+
+	def c(a):
+		return 2 * a
+
+	def h(s):
+		return s
+
+	inv_reward = inventoryReward(inv_space, f, c, h, K, _lambda)
+
+	inv_mdp = infiniteTime(inv_space, inv_reward, _lambda)
+
+	v_0 = np.ones(shape=(len(S), 1))
+
+	inv_mdp.optimal_value(v_0, 0.001, method='VI')
+	v_VI = inv_mdp.v
+	pol_VI = inv_mdp.a_policy
+	inv_mdp.optimal_value(v_0, 0.001, method='JAC')
+	v_JAC = inv_mdp.v
+	pol_JAC = inv_mdp.a_policy
+	inv_mdp.optimal_value(v_0, 0.001, method='GS')
+	v_GS = inv_mdp.v
+	pol_GS = inv_mdp.a_policy
+
+	if log:
+		t_GS = inv_mdp.computing_times['GS'].total_time
+		for i, t in inv_mdp.computing_times.items():
+			print(i, round(t.total_time, 4), round(t.total_time / t_GS, 4), sep='&', end='\\\\ \n')
+		print(inv_mdp.iteration_counts, '\n')
+
+		print(f'VI - JAC: {norm(v_JAC - v_VI)}')
+		print(f'JAC - GS: {norm(v_GS - v_JAC)}')
+		print(f'VI - GS: {norm(v_GS - v_VI)}', '\n')
+
+		print(f'VI: ', pol_VI)
+		print(f'JAC: ', pol_JAC)
+		print(f'GS: ', pol_GS, '\n')
+
+	return inv_mdp
+
+
+def alt_case(log=False):
+	def f(s):
+		return 10 * s
+
+	def c(a):
+		return 3 * a - 0.01 * a ** 2
+
+	def h(s):
+		return s
+
+	inv_reward = inventoryReward(inv_space, f, c, h, K, _lambda)
+
+	inv_mdp = infiniteTime(inv_space, inv_reward, _lambda)
+
+	v_0 = np.ones(shape=(len(S), 1))
+
+	inv_mdp.optimal_value(v_0, 0.001, method='VI')
+	v_VI = inv_mdp.v
+	pol_VI = inv_mdp.a_policy
+	inv_mdp.optimal_value(v_0, 0.001, method='JAC')
+	v_JAC = inv_mdp.v
+	pol_JAC = inv_mdp.a_policy
+	inv_mdp.optimal_value(v_0, 0.001, method='GS')
+	v_GS = inv_mdp.v
+	pol_GS = inv_mdp.a_policy
+
+	if log:
+		t_GS = inv_mdp.computing_times['GS'].total_time
+		for i, t in inv_mdp.computing_times.items():
+			print(i, round(t.total_time, 4), round(t.total_time / t_GS, 4), sep='&', end='\\\\ \n')
+		print(inv_mdp.iteration_counts, '\n')
+
+		print(f'VI - JAC: {norm(v_JAC - v_VI)}')
+		print(f'JAC - GS: {norm(v_GS - v_JAC)}')
+		print(f'VI - GS: {norm(v_GS - v_VI)}', '\n')
+
+		print(f'VI: ', pol_VI)
+		print(f'JAC: ', pol_JAC)
+		print(f'GS: ', pol_GS, '\n')
+
+	return inv_mdp
+
+
+def changing_cost():
+	inv_mdp1 = base_case()
+	inv_mdp2 = alt_case()
+
+	plt.plot(inv_mdp1.S, inv_mdp1.v, label=r'$c(s)=2s$')
+	plt.plot(inv_mdp2.S, inv_mdp2.v, label=r'$c(s)=3s - 0.001s^2$')
+	
+	plt.legend()
+	plt.xlabel('Estado')	
+	plt.ylabel(r'$v^*_\lambda(s)$')
+	
+	plt.show()
+
+
+def cmap_plot():
+	fig = plt.figure(constrained_layout=True)
+	gs = fig.add_gridspec(1, 11)
+	ax = fig.add_subplot(gs[0, :10])
+	ax_c = fig.add_subplot(gs[0, 10:])
+
+	return fig, ax, ax_c
+
+
+def _lambda_to_1(lb=0.9, ub=0.999):
+
+	cmap = cm.get_cmap('coolwarm', 256)
+	_Lambda = np.linspace(lb, ub, 30)
+
+	def f(s):
+		return 10 * s
+
+	def c(a):
+		return 3 * a - 0.01 * a ** 2
+
+	def h(s):
+		return s
+
+	MDPS = dict()
+
+	f1, ax1, ax1c = cmap_plot()
+	f2, ax2, ax2c = cmap_plot()
+	f3, ax3, ax3c = cmap_plot()
+
+	T_T = Timer('Con truco')
+	T_F = Timer('Sin truco')
+	for l in _Lambda:
+		print(l)
+		T_T.start()
+		inv_reward = inventoryReward(inv_space, f, c, h, K, l, lambda_e_1=True)
+		MDPS[l] = infiniteTime(inv_space, inv_reward, l)
+		MDPS[l].optimal_value()
+		T_T.stop()
+		T_F.start()
+		inv_reward = inventoryReward(inv_space, f, c, h, K, l, lambda_e_1=False)
+		MDPS[l] = infiniteTime(inv_space, inv_reward, l)
+		MDPS[l].optimal_value()
+		T_F.stop()
+
+		ax1.plot(MDPS[l].S, MDPS[l].v, c=cmap((l - lb) / (ub - lb)), label=r'$\lambda = $'+str(round(l, 4)))
+		ax2.plot(MDPS[l].S, MDPS[l].v * (1 - l), c=cmap((l - lb) / (ub - lb)), label=r'$\lambda = $'+str(round(l, 4)))
+
+		if l == lb:
+			c_pol = MDPS[l].a_policy
+			c_l = l
+
+		if MDPS[l].a_policy != c_pol:
+			c_u = l
+			i_0 = 0
+			for i in MDPS[l].space.S:
+				if c_pol[i] > 0:
+					i_0 = i
+
+			i_0 += 5
+			ax3.plot(range(i_0), list(c_pol.values())[:i_0], '-o',
+			         c=cmap(((c_u + c_l) / 2 - lb) / (ub - lb)),
+			         label=r'$\lambda \in$ ' + f'[{round(c_l, 3)}, {round(c_u, 3)})')
+
+			c_pol = MDPS[l].a_policy
+			c_l = c_u
+
+	i_0 = 0
+	for i in MDPS[l].space.S:
+		if c_pol[i] > 0:
+			i_0 = i
+
+	i_0 += 5
+	ax3.plot(range(i_0), list(c_pol.values())[:i_0], '-o',
+	         c=cmap(((c_u + ub) / 2 - lb) / (ub - lb)),
+	         label=r'$\lambda \in$ ' + f'[{round(c_l, 3)}, {round(ub, 3)}]')
+
+	norm = mpl.colors.Normalize(vmin=lb, vmax=ub)
+	mpl.colorbar.ColorbarBase(ax1c, cmap=cmap, norm=norm)
+	mpl.colorbar.ColorbarBase(ax2c, cmap=cmap, norm=norm)
+	mpl.colorbar.ColorbarBase(ax3c, cmap=cmap, norm=norm)
+
+	ax1.set_xlabel('Estados')
+	ax2.set_xlabel('Estados')
+	ax3.set_xlabel('Estados')
+
+	ax1.set_ylabel(r'$(1 - \lambda) v^*_\lambda$')
+	ax2.set_ylabel(r'$v^*_\lambda$')
+	ax3.set_ylabel('Acción')
+	ax3.legend()
+
+	f4, ax4 = plt.subplots()
+	ax4.plot(_Lambda, [MDPS[l].computing_times['GS'].total_time for l in _Lambda])
+	ax4.set_xlabel(r'$\lambda$')
+	ax4.set_ylabel(r'Tiempo de cómputo (s)')
+
+	print(f'El tiempo total que se ahorra uno es {(T_F.total_time - T_T.total_time) }, en porcentages {(T_F.total_time - T_T.total_time) / T_T.total_time}')
+
+	plt.show()
+
+
+
+
 if __name__ == "__main__":
+	global M, A, S, K, _lambda, dem_distr, inv_space
+
 	M = 100
-	A = list(range(M+1))
-	S = list(range(M+1))
+	A = list(range(M + 1))
+	S = list(range(M + 1))
 	K = 2
 	_lambda = 0.9
 
@@ -133,47 +370,5 @@ if __name__ == "__main__":
 
 	inv_space = inventorySpace(A, S, dem_distr, M)
 
-	def f(s):
-		return 10 * s
-
-	def c(a):
-		# return 3 * a - 0.01 * a ** 2
-		return 2 * a
-
-	def h(s):
-		return s
-
-	inv_reward = inventoryReward(inv_space, f, c, h, K)
-
-	inv_mdp = infiniteTime(inv_space, inv_reward, _lambda)
-
-	v_0 = np.ones(shape=(len(S), 1))
-
-	inv_mdp.optimal_value(v_0, 0.001, method='Value_Iteration')
-	v_VI = inv_mdp.v
-	pol_VI = inv_mdp.a_policy
-	inv_mdp.optimal_value(v_0, 0.001, method='Jacobi')
-	v_JAC = inv_mdp.v
-	pol_JAC = inv_mdp.a_policy
-	inv_mdp.optimal_value(v_0, 0.001, method='Gauss-Seidel')
-	v_GS = inv_mdp.v
-	pol_GS = inv_mdp.a_policy
-
-	print(inv_mdp.computing_times)
-	print(inv_mdp.iteration_counts, '\n')
-
-	print(f'VI - JAC: {norm(v_JAC - v_VI)}')
-	print(f'JAC - GS: {norm(v_GS - v_JAC)}')
-	print(f'VI - GS: {norm(v_GS - v_VI)}', '\n')
-
-	print(f'VI: ', pol_VI)
-	print(f'JAC: ', pol_JAC)
-	print(f'GS: ', pol_GS, '\n')
-
-	# print(f'VI: ', v_VI)
-	# print(f'JAC: ', v_JAC)
-	# print(f'GS: ', v_GS)
-
-
-
+	_lambda_to_1()
 

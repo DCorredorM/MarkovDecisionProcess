@@ -30,7 +30,7 @@ class Policy:
         self.Q = space.Q
 
         if finiteTimeSpace in space.__class__.__bases__:
-            self.T = space.T
+            self.T = space.total_time
 
         self.tree = None
 
