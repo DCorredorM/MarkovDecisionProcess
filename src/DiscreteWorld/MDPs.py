@@ -394,14 +394,15 @@ class infiniteTime(MDP):
 
         self.computing_times[method].stop()
 
-    def solve(self, initial_state):
+    def solve(self, v_0=None, epsilon=1E-2, method='GS'):
         """
         Starts the recursion at a given initial state and solves the MDP.
 
         Parameters
         ----------
-        initial_state: state
-            State in which the recursion is initialized
+        method
+        epsilon
+        v_0
 
         Returns
         -------
@@ -410,4 +411,7 @@ class infiniteTime(MDP):
         float
             The value of the optimal policy.
         """
-        ...
+
+        self.optimal_value(v_0, epsilon, method)
+        self.policy.add_policy(self.a_policy)
+        return self.policy, self.v

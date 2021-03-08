@@ -177,10 +177,9 @@ class DMSPolicy(Policy):
         self.policy = {}
         self.S = list(self.S)
 
-
     def __repr__(self):
-        st = str(self.tree.show())
-        return st
+
+        return str(self.policy)
 
     def act(self, state):
         """

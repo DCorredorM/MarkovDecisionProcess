@@ -171,15 +171,11 @@ def base_case(log=False):
 
 	v_0 = np.ones(shape=(len(S), 1))
 
-	inv_mdp.optimal_value(v_0, 0.001, method='VI')
-	v_VI = inv_mdp.v
-	pol_VI = inv_mdp.a_policy
-	inv_mdp.optimal_value(v_0, 0.001, method='JAC')
-	v_JAC = inv_mdp.v
-	pol_JAC = inv_mdp.a_policy
-	inv_mdp.optimal_value(v_0, 0.001, method='GS')
-	v_GS = inv_mdp.v
-	pol_GS = inv_mdp.a_policy
+	pol_VI, v_VI = inv_mdp.solve(v_0, 0.001, method='VI')
+
+	pol_JAC, v_JAC = inv_mdp.solve(v_0, 0.001, method='JAC')
+
+	pol_GS , v_GS = inv_mdp.solve(v_0, 0.001, method='GS')
 
 	if log:
 		t_GS = inv_mdp.computing_times['GS'].total_time
@@ -355,8 +351,6 @@ def _lambda_to_1(lb=0.9, ub=0.999):
 	plt.show()
 
 
-
-
 if __name__ == "__main__":
 	global M, A, S, K, _lambda, dem_distr, inv_space
 
@@ -370,5 +364,6 @@ if __name__ == "__main__":
 
 	inv_space = inventorySpace(A, S, dem_distr, M)
 
-	_lambda_to_1()
+	base_case(True)
+
 
