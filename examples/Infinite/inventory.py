@@ -1,5 +1,4 @@
 from DiscreteWorld.Space import infiniteTimeSpace
-from DiscreteWorld.Reward import infiniteTimeReward
 from DiscreteWorld.MDPs import infiniteTime
 from Utilities.counters import Timer
 import matplotlib.pyplot as plt
@@ -10,6 +9,7 @@ from matplotlib.colors import ListedColormap,LinearSegmentedColormap
 from Utilities.utilities import norm
 
 import numpy as np
+import torch as pt
 from scipy.stats import poisson
 
 
@@ -18,7 +18,7 @@ class inventorySpace(infiniteTimeSpace):
 	Implements the space class for the put option MDP
 	"""
 
-	def __init__(self, actions, states, dem_distr, M):
+	def __init__(self, actions, states, dem_distr, M,  f, c, h, K, _lambda, lambda_e_1=False):
 		self.dem_distr = dem_distr
 		self.M = M
 		self.QQ = dict()
@@ -28,9 +28,23 @@ class inventorySpace(infiniteTimeSpace):
 		self.S = states
 		self.adm_A = NotImplemented
 		self.Q = NotImplemented
+
+		self.h = h
+		self.c = c
+		self.f = f
+		self.K = K
+		self._lambda = _lambda
+
+		self.O = dict()
+		self.F = dict()
+		self.rew = dict()
+		self.lambda_e_1 = lambda_e_1
+
+
 		self.build_distr()
 		self.build_admisible_actions()
 		self.build_kernel()
+		self.build_reward()
 
 	def build_admisible_actions(self):
 		"""
@@ -52,17 +66,20 @@ class inventorySpace(infiniteTimeSpace):
 				return self.QQ[s, a]
 			else:
 				distr = np.zeros(shape=(1, len(self.S)))
-				for j in range(len(self.S)):
+				distrdic = {}
+				for j_s, j in enumerate(self.S):
 					if self.M >= j > s + a:
 						distr[0][j] = 0
 					elif self.M >= s + a >= j > 0:
 						distr[0][j] = self.pmf[s + a - j]
+						distrdic[j_s] = distr[0][j]
 					else:
 						distr[0][j] = 1 - self.cdf[s + a - 1]
+						distrdic[j_s] = distr[0][j]
 
-				self.QQ[s, a] = distr
+				self.QQ[s, a] = distrdic
 
-				return distr
+				return distrdic
 
 		self.Q = Q
 
@@ -73,43 +90,6 @@ class inventorySpace(infiniteTimeSpace):
 
 		self.pmf[-1] = 0
 		self.cdf[-1] = 0
-
-
-class inventoryReward(infiniteTimeReward):
-	"""
-	Implements the reward class for the put option MDP.
-	"""
-
-	def __init__(self, space: inventorySpace, f, c, h, K, _lambda, lambda_e_1=False):
-		super().__init__(space)
-		self.h = h
-		self.c = c
-		self.f = f
-		self.K = K
-		self._lambda = _lambda
-
-		self.O = dict()
-		self.F = dict()
-		self.rew = dict()
-		self.lambda_e_1 = lambda_e_1
-		self.build_reward()
-
-
-	def build_reward(self):
-		for s in self.S:
-			self.F[s] = sum(self.f(j) * self.space.dem_distr.pmf(j) for j in range(s)) \
-			            + self.f(s) * (1 - self.space.dem_distr.cdf(s - 1))
-
-			for a in self.adm_A(s):
-				if a not in self.O.keys():
-					self.O[a] = (self.K + self.c(a)) * int(a != 0)
-
-				if s + a not in self.F.keys():
-					self.F[s + a] = sum(self.f(j) * self.space.dem_distr.pmf(j) for j in range(s + a)) \
-					                + self.f(s + a) * (1 - self.space.dem_distr.cdf(s + a - 1))
-				self.rew[s, a] = self.F[s + a] - self.O[a] - self.h(s + a)
-				if self.lambda_e_1:
-					self.rew[s, a] *= (1 - self._lambda)
 
 	def reward(self, state, action=None):
 		"""
@@ -130,12 +110,28 @@ class inventoryReward(infiniteTimeReward):
 		"""
 		return self.rew[state, action]
 
+	def build_reward(self):
+		for s in self.S:
+			self.F[s] = sum(self.f(j) * self.dem_distr.pmf(j) for j in range(s)) \
+			            + self.f(s) * (1 - self.dem_distr.cdf(s - 1))
+
+			for a in self.adm_A(s):
+				if a not in self.O.keys():
+					self.O[a] = (self.K + self.c(a)) * int(a != 0)
+
+				if s + a not in self.F.keys():
+					self.F[s + a] = sum(self.f(j) * self.dem_distr.pmf(j) for j in range(s + a)) \
+					                + self.f(s + a) * (1 - self.dem_distr.cdf(s + a - 1))
+				self.rew[s, a] = self.F[s + a] - self.O[a] - self.h(s + a)
+				if self.lambda_e_1:
+					self.rew[s, a] *= (1 - self._lambda)
+
 
 def plot_f1():
 	inv_mdp = base_case()
-	V_VI = inv_mdp.iteration_counts['VI'].List
-	V_JAC = inv_mdp.iteration_counts['JAC'].List
-	V_GS = inv_mdp.iteration_counts['GS'].List
+	v_VI = inv_mdp.iteration_counts['VI'].List
+	v_JAC = inv_mdp.iteration_counts['JAC'].List
+	v_GS = inv_mdp.iteration_counts['GS'].List
 
 	y1 = [norm(v_VI - v) for v in V_VI]
 	y2 = [norm(v_JAC - v) for v in V_JAC]
@@ -165,17 +161,17 @@ def base_case(log=False):
 	def h(s):
 		return s
 
-	inv_reward = inventoryReward(inv_space, f, c, h, K, _lambda)
+	inv_space = inventorySpace(actions=A, states=S, dem_distr=dem_distr, M=M,  f=f, c=c, h=h, K=K, _lambda=_lambda)
 
-	inv_mdp = infiniteTime(inv_space, inv_reward, _lambda)
+	inv_mdp = infiniteTime(inv_space, _lambda)
 
-	v_0 = np.ones(shape=(len(S), 1))
+	v_0 = pt.zeros((len(S), 1))
 
-	pol_VI, v_VI = inv_mdp.solve(v_0, 0.001, method='VI')
+	pol_VI, v_VI = inv_mdp.solve(v_0, 0.001, improvement_method='VI')
 
-	pol_JAC, v_JAC = inv_mdp.solve(v_0, 0.001, method='JAC')
+	pol_JAC, v_JAC = inv_mdp.solve(v_0, 0.001, improvement_method='JAC')
 
-	pol_GS , v_GS = inv_mdp.solve(v_0, 0.001, method='GS')
+	pol_GS , v_GS = inv_mdp.solve(v_0, 0.001, improvement_method='GS')
 
 	if log:
 		t_GS = inv_mdp.computing_times['GS'].total_time
@@ -210,13 +206,13 @@ def alt_case(log=False):
 
 	v_0 = np.ones(shape=(len(S), 1))
 
-	inv_mdp.optimal_value(v_0, 0.001, method='VI')
+	inv_mdp._value_iteration(v_0, 0.001, improvement_method='VI')
 	v_VI = inv_mdp.v
 	pol_VI = inv_mdp.a_policy
-	inv_mdp.optimal_value(v_0, 0.001, method='JAC')
+	inv_mdp._value_iteration(v_0, 0.001, improvement_method='JAC')
 	v_JAC = inv_mdp.v
 	pol_JAC = inv_mdp.a_policy
-	inv_mdp.optimal_value(v_0, 0.001, method='GS')
+	inv_mdp._value_iteration(v_0, 0.001, improvement_method='GS')
 	v_GS = inv_mdp.v
 	pol_GS = inv_mdp.a_policy
 
@@ -287,12 +283,12 @@ def _lambda_to_1(lb=0.9, ub=0.999):
 		T_T.start()
 		inv_reward = inventoryReward(inv_space, f, c, h, K, l, lambda_e_1=True)
 		MDPS[l] = infiniteTime(inv_space, inv_reward, l)
-		MDPS[l].optimal_value()
+		MDPS[l]._value_iteration()
 		T_T.stop()
 		T_F.start()
 		inv_reward = inventoryReward(inv_space, f, c, h, K, l, lambda_e_1=False)
 		MDPS[l] = infiniteTime(inv_space, inv_reward, l)
-		MDPS[l].optimal_value()
+		MDPS[l]._value_iteration()
 		T_F.stop()
 
 		ax1.plot(MDPS[l].S, MDPS[l].v, c=cmap((l - lb) / (ub - lb)), label=r'$\lambda = $'+str(round(l, 4)))
@@ -362,7 +358,6 @@ if __name__ == "__main__":
 
 	dem_distr = poisson(mu=10)
 
-	inv_space = inventorySpace(A, S, dem_distr, M)
 
 	base_case(True)
 

@@ -1,5 +1,4 @@
 from DiscreteWorld.Space import finiteTimeSpace
-from DiscreteWorld.Reward import finiteTimeReward
 from DiscreteWorld.MDPs import finiteTime
 from math import exp
 import matplotlib.pyplot as plt
@@ -11,11 +10,14 @@ class putOptionSpace(finiteTimeSpace):
     Implements the space class for the put option MDP
     """
 
-	def __init__(self, actions, states, time_horizon, up, down, distr):
-		super(putOptionSpace, self).__init__(actions, states, time_horizon)
+	def __init__(self, actions, states, time_horizon, up, down, distr, strike, discount_rate, transaction_cost):
+		super(putOptionSpace, self).__init__(actions, states, time_horizon, )
 		self.u = up
 		self.d = down
 		self.distr = distr
+		self.strike = strike
+		self.delta = discount_rate
+		self.tau = transaction_cost
 
 	def build_admisible_actions(self):
 		"""
@@ -43,18 +45,6 @@ class putOptionSpace(finiteTimeSpace):
 			return density
 
 		self.Q = Q
-
-
-class putOptionReward(finiteTimeReward):
-	"""
-    Implements the reward class for the put option MDP.
-    """
-
-	def __init__(self, space, strike, discount_rate, transaction_cost):
-		super().__init__(space)
-		self.strike = strike
-		self.delta = discount_rate
-		self.tau = transaction_cost
 
 	def reward(self, t, state, action=None):
 		"""
@@ -167,11 +157,10 @@ if __name__ == "__main__":
 	distr = {'u': 0.4, 'e': 0.1, 'd': 0.5}
 
 	# Creates the Space object for the put option MDP
-	put_space = putOptionSpace(A, S, T, u, d, distr)
-	# Creates the Reward object for the put option MDP
-	put_reward = putOptionReward(put_space, strike=strike_p, discount_rate=r, transaction_cost=tau)
+	put_space = putOptionSpace(A, S, T, u, d, distr, strike=strike_p, discount_rate=r, transaction_cost=tau)
+
 	# Creates the MDP object with the proper space and reward objects
-	mdp = finiteTime(put_space, put_reward)
+	mdp = finiteTime(put_space)
 	# Solves the MDP and stores its solution
 	pol, v = mdp.solve(S0)
 	# Prints the value of
