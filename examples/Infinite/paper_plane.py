@@ -399,7 +399,6 @@ def solve(p_mdp):
     polPI, vPI = p_mdp.solve(method=MDP.PolicyIteration)
     polLP, vLP = p_mdp.solve(method=MDP.LinearPrograming)
 
-
     path = f'examples/data/PI_policy_mat{N}.pickle'
     with open(path, 'wb') as file:
         pickle.dump(polPI.matrix, file)
