@@ -214,10 +214,15 @@ class TwoStageSP:
         self.epsilon = epsilon
 
         logging.basicConfig()
-        self.logger = logging.getLogger('TwoStageSP')
+        self.outputLog = logging.getLogger('TwoStageSP')
         if ('verbose', True) in kwargs.items():
-            self.logger.setLevel(logging.DEBUG)
-        self.logger.info("Created logger")
+            self.outputLog.setLevel(logging.DEBUG)
+        self.outputLog.info("Created logger")
+
+        self.infoLog = logging.getLogger('TwoStageSP')
+        if ('verbose', True) in kwargs.items():
+            self.infoLog.setLevel(logging.DEBUG)
+        self.infoLog.info("Created logger")
 
         self.computing_times = dict()
         self.x_hat = None
@@ -251,10 +256,10 @@ class TwoStageSP:
         self.computing_times['multi_cut'].start()
         consider_theta = [False] * self.num_scenarios
 
-        self.logger.info(f'\n{"-" * 100}\nMulti-cut L-Shaped' + \
+        self.outputLog.info(f'\n{"-" * 100}\nMulti-cut L-Shaped' + \
                          f'\nConstraints: {len(self.first_stage.model.getConstrs())}' + \
                          f'\tVariables: {len(self.first_stage.model.getVars())}\n{"-" * 100}')
-        self.logger.info(f'Lower bound\tUpper Bound\tGAP')
+        self.outputLog.info(f'Lower bound\tUpper Bound\tGAP')
         while not stop:
             # Solve first stage and query x_hat, Theta_hat.
             x_hat, theta_hat = self.first_stage.solve()
@@ -289,7 +294,7 @@ class TwoStageSP:
 
                     # Add feasibility cuts
                     self.first_stage.model.addConstr(D @ self.first_stage.x >= d, name=f'FC_{k}{r.Count}')
-                    self.logger.info(f'-inf\tinf\t-\tFC')
+                    self.outputLog.info(f'-inf\tinf\t-\tFC')
                     r.count()
                     break
 
@@ -307,7 +312,7 @@ class TwoStageSP:
                 base = (self.first_stage.c @ x_hat)[0][0]
                 lb, ub = (base + self.probabilities.T @ theta_hat, base + w)
                 v.add((lb, ub))
-                self.logger.info(f'{round(lb, 4)}\t{round(ub, 4)}\t{round((ub - lb) / ub, 4)}')
+                self.outputLog.info(f'{round(lb, 4)}\t{round(ub, 4)}\t{round((ub - lb) / ub, 4)}')
             else:
                 v.count()
 
@@ -316,7 +321,7 @@ class TwoStageSP:
         self.objVal = self.first_stage.model.objVal
         self.solved = True
 
-        self.logger.info(f'\nMulti-cut L-shaped converged\n{"-" * 100}' + \
+        self.outputLog.info(f'\nMulti-cut L-shaped converged\n{"-" * 100}' + \
                          f'\nTime:\t{self.computing_times["multi_cut"].total_time} seconds' + \
                          f'\nIterations:\t{v.Count}' + \
                          f'\nOptimal value:\t{self.first_stage.model.objVal}' + \
@@ -338,10 +343,10 @@ class TwoStageSP:
         r, s, v = TallyCounter('Feasibility'), TallyCounter('Optimality'), TallyCounter('Iterations')
 
         self.computing_times['L_shaped'].start()
-        self.logger.info(f'\n{"-" * 100}\nL-Shaped' + \
+        self.infoLog.info(f'\n{"-" * 100}\nL-Shaped' + \
                          f'\nConstraints: {len(self.first_stage.model.getConstrs())}' + \
                          f'\tVariables: {len(self.first_stage.model.getVars())}\n{"-" * 100}')
-        self.logger.info(f'Lower bound\tUpper Bound\tGAP')
+        self.outputLog.info(f'Lower bound\tUpper Bound\tGAP')
         while not stop:
             # Solve first stage and query x_hat, Theta_hat.
             x_hat, theta_hat = self.first_stage.solve()
@@ -366,7 +371,7 @@ class TwoStageSP:
 
                     # Add feasibility cuts
                     self.first_stage.model.addConstr(D @ self.first_stage.x >= d, name=f'FC_{r.Count}')
-                    self.logger.info(f'-inf\tinf\t-\tFC')
+                    self.outputLog.info(f'-inf\tinf\t-\tFC')
 
                     r.count()
                     break
@@ -394,7 +399,7 @@ class TwoStageSP:
                 lb, ub = ((base + theta_hat)[0], (base + w[0][0]))
                 v.add((lb, ub))
 
-                self.logger.info(f'{round(lb, 4)}\t{round(ub, 4)}\t{round((ub - lb) / ub, 4)}')
+                self.outputLog.info(f'{round(lb, 4)}\t{round(ub, 4)}\t{round((ub - lb) / ub, 4)}')
             else:
                 v.count()
 
@@ -403,7 +408,7 @@ class TwoStageSP:
         self.objVal = self.first_stage.model.objVal
         self.solved = True
 
-        self.logger.info(f'\nL-shaped converged\n{"-" * 100}' + \
+        self.outputLog.info(f'\nL-shaped converged\n{"-" * 100}' + \
                          f'\nTime:\t{self.computing_times["L_shaped"].total_time} seconds' + \
                          f'\nIterations:\t{v.Count}' + \
                          f'\nOptimal value:\t{self.objVal}' + \
@@ -424,29 +429,31 @@ class TwoStageSP:
         else:
             return self.l_shaped(reset)
 
-    def _upper_bound(self, sample, alpha=0.01):
+    def upper_bound(self, sample, alpha=0.01):
         vals = []
         N = len(sample)
-        self.logger.info(f'{"-"*100}\nStarted computing upper bound\n{"-"*100}')
+        self.outputLog.info(f'{"-" * 100}\nStarted computing upper bound\n{"-" * 100}')
         t = Timer('upper bound')
         self.computing_times['upper_bound'] = t
+        t.start()
         for s in sample:
             s.build_dual(self.x_hat)
             feasibility, pi_sigma, wk = s.solve_dual()
             vals.append(wk)
 
-        mu = sum(vals) / len(vals)
-        sigma = np.sqrt(sum((v - mu) ** 2 for v in vals) / (len(vals) - 1))
+        mu = sum(vals) / N
+        sigma = np.sqrt(sum((v - mu) ** 2 for v in vals) / (N - 1))
 
         upper_bound = self.first_stage.c @ self.x_hat + mu + sts.norm.ppf(1 - alpha) * sigma / np.sqrt(N)
-        self.logger.info(f'{"-"*100}\nFinish computing upper bound. Total time was {t.total_time} seconds.\n{"-"*100}')
-        return mu, sigma, upper_bound[0][0]
+        t.stop()
+        self.outputLog.info(f'{"-" * 100}\nFinish computing upper bound. Total time was {t.total_time} seconds.\n{"-" * 100}')
+        return vals, mu, sigma, upper_bound[0][0]
 
-    def _lower_bound(self, samples, alpha=0.01):
+    def lower_bound(self, samples, alpha=0.01):
         vals = []
         M = len(samples)
         n = len(samples[0])
-        self.logger.info(f'{"-"*100}\nStarted computing lower bound\n{"-"*100}')
+        self.outputLog.info(f'{"-" * 100}\nStarted computing lower bound\n{"-" * 100}')
         t = Timer('lower bound')
         self.computing_times['lower_bound'] = t
         t.start()
@@ -456,20 +463,17 @@ class TwoStageSP:
             self.solve(reset=True)
             vals.append(self.objVal)
 
-        mu = sum(vals) / len(vals)
-        sigma = np.sqrt(sum((v - mu) ** 2 for v in vals) / (len(vals) - 1))
+        mu = sum(vals) / M
+        sigma = np.sqrt(sum((v - mu) ** 2 for v in vals) / (M - 1))
 
         lower_bound = mu + sts.norm.ppf(alpha) * sigma / np.sqrt(M)
         t.stop()
-        self.logger.info(f'Finish computing lower bound. Total time was {t.total_time} seconds.')
+        self.outputLog.info(f'Finish computing lower bound. Total time was {t.total_time} seconds.')
 
-        return mu, sigma, lower_bound
+        return vals, mu, sigma, lower_bound
 
-    def confidence_interval(self, upper_bound_sample, lower_bound_samples, alpha=0.01):
-        if not self.solved:
-            self.solve()
-        f_hat = self.objVal
-        _, _, lb = self._lower_bound(lower_bound_samples, alpha)
-        _, _, ub = self._upper_bound(upper_bound_sample, alpha)
-        self.logger.info(f'Confidence interval for the GAP is ({lb - f_hat}, {ub - f_hat})')
-        return lb - f_hat, ub - f_hat
+    def optimality_gap(self, upper_bound_sample, lower_bound_samples, alpha=0.01):
+        _, _, _, lb = self.lower_bound(lower_bound_samples, alpha)
+        _, _, _, ub = self.upper_bound(upper_bound_sample, alpha)
+        self.outputLog.info(f'Confidence interval for the GAP is ({lb - f_hat}, {ub - f_hat})')
+        return ub - lb

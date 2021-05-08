@@ -5,7 +5,10 @@ import matplotlib.pyplot as plt
 from itertools import product
 from functools import reduce
 import seaborn as sns
+sns.set(font_scale=1, rc={'text.usetex':True})
 import pandas as pd
+
+from Utilities.counters import Timer
 
 from ContiniousWorld.TwoStage.LShaped import FirstStage, SecondStage, TwoStageSP
 
@@ -218,26 +221,57 @@ def cont_experiments():
 
     n, M, N = 5000, 100, 15000
     alpha = 0.01
+    timers = dict()
 
+    t = Timer('first stage creation')
+
+    t.start()
     fs = create_FS(G)
+    t.stop()
+    timers['fs'] = t
+
+    t = Timer('second stage creation', verbose=True)
+    t.start()
     ssps = create_SS_c(n, G, P)
     tssp = TwoStageSP(fs, ssps, verbose=True)
+    t.stop()
+    timers['ss'] = t
 
     tssp.solve(multi_cut=False)
-    print(f'L sol:\nx:\t{tssp.x_hat}\ntheta:\t{tssp.theta_hat}')
+    # print(f'L sol:\nx:\t{tssp.x_hat}\ntheta:\t{tssp.theta_hat}')
 
+    t = Timer('ub ss creation', verbose=True)
+    t.start()
     ub_sstages = create_SS_c(N, new=False)
+    t.stop()
+    timers['ub_ss'] = t
 
+    t = Timer('lb ss creation', verbose=True)
+    t.start()
     lb_samples = []
     for i in range(M):
         sample = create_SS_c(n, new=False)
         lb_samples.append(sample)
 
-    tssp.confidence_interval(lower_bound_samples=lb_samples, upper_bound_sample=ub_sstages, alpha=alpha)
+    t.stop()
+    timers['lb_ss'] = t
+
+    # tssp.confidence_interval(lower_bound_samples=lb_samples, upper_bound_sample=ub_sstages, alpha=alpha)
+
+    vals, mean, sigma, ub = tssp.upper_bound(ub_sstages, alpha=alpha)
+    print(mean, sigma, ub)
+    sns.displot(data=vals, kde=True)
+    plt.xlabel(r"$Q(\hat{x}, \xi)$")
+    plt.show()
+    vals, mean, sigma, lb = tssp.lower_bound(lb_samples, alpha=alpha)
+    print(mean, sigma, lb)
+    sns.displot(data=vals, kde=True)
+    plt.xlabel(r"$\hat{f}_n$")
+    plt.show()
 
 
 if __name__ == '__main__':
-    np.random.seed(178898)
+    np.random.seed(1788980)
     cont_experiments()
 
 
