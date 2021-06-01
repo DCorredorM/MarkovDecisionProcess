@@ -1,5 +1,5 @@
-from DiscreteWorld.Space import finiteTimeSpace
-from DiscreteWorld.MDPs import finiteTime
+from discrete_world.space import finiteTimeSpace
+from discrete_world.mdp import finiteTime
 from math import exp
 import matplotlib.pyplot as plt
 from functools import reduce

@@ -1,17 +1,17 @@
 import sys
 
-from DiscreteWorld.Space import infiniteTimeSpace
-from DiscreteWorld.MDPs import infiniteTime
-from DiscreteWorld.MDPs import MDP
-from Utilities.counters import Timer, TallyCounter, TallyMeasurer
+from discrete_world.space import infiniteTimeSpace
+from discrete_world.mdp import infiniteTime
+from discrete_world.mdp import MDP
+from utilities.counters import Timer, TallyCounter, TallyMeasurer
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from DiscreteWorld.Policies import DMSPolicy
+from discrete_world.policies import DMSPolicy
 import logging
 
 import pickle5 as pickle
 
-from Utilities.utilities import norm
+from utilities.utilities import norm
 
 import numpy as np
 from scipy.stats import poisson
@@ -428,7 +428,7 @@ def analyze_ship(ship: Spaceship, ax):
     print(f'{ship.name}\n{"-" * 10}\nThe average distance was {ship.average_obj_fun(mean=True)}')
     print(f'The average number of crashes was {ship.average_crashes(mean=True)}\n')
 
-    hist, s, s = ax.hist(ship.average_obj_fun.List[1:], alpha=0.6, label=f'{ship.initial_position}')
+    hist, s, s = ax.hist(ship.average_obj_fun.measures[1:], alpha=0.6, label=f'{ship.initial_position}')
 
     # ax.vlines(ymin=0, ymax=max(hist),
     #           x=norm(np.array(ship.initial_position) - np.array(ship.space.T[0])),

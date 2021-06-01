@@ -1,12 +1,12 @@
-from DiscreteWorld.Space import infiniteTimeSpace
-from DiscreteWorld.MDPs import infiniteTime
-from Utilities.counters import Timer
+from discrete_world.space import infiniteTimeSpace
+from discrete_world.mdp import infiniteTime
+from utilities.counters import Timer
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap,LinearSegmentedColormap
 
-from Utilities.utilities import norm
+from utilities.utilities import norm
 
 import numpy as np
 import torch as pt
@@ -129,9 +129,9 @@ class inventorySpace(infiniteTimeSpace):
 
 def plot_f1():
 	inv_mdp = base_case()
-	v_VI = inv_mdp.iteration_counts['VI'].List
-	v_JAC = inv_mdp.iteration_counts['JAC'].List
-	v_GS = inv_mdp.iteration_counts['GS'].List
+	v_VI = inv_mdp.iteration_counts['VI'].measures
+	v_JAC = inv_mdp.iteration_counts['JAC'].measures
+	v_GS = inv_mdp.iteration_counts['GS'].measures
 
 	y1 = [norm(v_VI - v) for v in V_VI]
 	y2 = [norm(v_JAC - v) for v in V_JAC]

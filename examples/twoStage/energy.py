@@ -8,9 +8,9 @@ import seaborn as sns
 sns.set(font_scale=1, rc={'text.usetex':True})
 import pandas as pd
 
-from Utilities.counters import Timer
+from utilities.counters import Timer
 
-from ContiniousWorld.TwoStage.LShaped import FirstStage, SecondStage, TwoStageSP
+from continious_world.two_stage.LShaped import FirstStage, SecondStage, TwoStageSP
 
 
 def plot_discrete_pmf(values, probs, **kwargs):

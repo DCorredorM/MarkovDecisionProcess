@@ -1,6 +1,6 @@
-from DiscreteWorld.Space import finiteTimeSpace
-from DiscreteWorld.Reward import finiteTimeReward
-from DiscreteWorld.MDPs import finiteTime
+from discrete_world.space import finiteTimeSpace
+from discrete_world.Reward import finiteTimeReward
+from discrete_world.mdp import finiteTime
 import networkx as nx
 
 
