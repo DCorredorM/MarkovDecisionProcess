@@ -1,0 +1,130 @@
+2021-06-04 11:25:57,049:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:25:57,532:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:25:57,832:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:25:57,833:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:25:57,834:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:25:57,835:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:25:57,837:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:25:57,838:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:25:57,840:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:25:57,841:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:31:04,774:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:31:10,551:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:31:11,111:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:31:11,113:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:31:11,114:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:31:11,116:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:31:11,118:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:31:11,119:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:31:11,121:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:31:11,122:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:38:11,102:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:38:11,603:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:38:11,897:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:38:11,898:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:38:11,899:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:38:11,900:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:38:11,901:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:38:11,902:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:38:11,904:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:38:11,907:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:39:54,534:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:39:55,813:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:39:56,297:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:39:56,299:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:39:56,301:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:39:56,303:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:39:56,305:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:39:56,307:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:39:56,309:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:39:56,311:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:40:27,017:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:40:28,210:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:40:28,712:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:40:28,714:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:40:28,715:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:40:28,717:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:40:28,718:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:40:28,720:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:40:28,721:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:40:28,723:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:40:48,190:INFO: Evaluating...
+2021-06-04 11:44:30,953:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:44:32,244:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:44:32,786:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:44:32,787:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:44:32,789:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:44:32,791:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:44:32,793:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:44:32,794:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:44:32,796:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:44:32,798:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:44:54,451:INFO: Evaluating...
+2021-06-04 11:45:29,520:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:45:30,796:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:45:31,317:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:45:31,319:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:45:31,320:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:45:31,322:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:45:31,324:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:45:31,325:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:45:31,327:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:45:31,328:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:46:49,057:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:46:50,223:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:46:50,699:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:46:50,701:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:46:50,702:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:46:50,704:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:46:50,705:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:46:50,707:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:46:50,708:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:46:50,710:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:47:01,586:INFO: Evaluating...
+2021-06-04 11:49:23,182:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/contrib/layers/python/layers/layers.py:1634: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+2021-06-04 11:49:24,451:WARNING: From /usr/local/Caskroom/miniconda/base/envs/RL/lib/python3.7/site-packages/tensorflow/python/ops/math_grad.py:1205: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-06-04 11:49:24,976:INFO: Summary name grads norm is illegal; using grads_norm instead.
+2021-06-04 11:49:24,978:INFO: Summary name Avg Reward is illegal; using Avg_Reward instead.
+2021-06-04 11:49:24,980:INFO: Summary name Max Reward is illegal; using Max_Reward instead.
+2021-06-04 11:49:24,981:INFO: Summary name Std Reward is illegal; using Std_Reward instead.
+2021-06-04 11:49:24,983:INFO: Summary name Avg Q is illegal; using Avg_Q instead.
+2021-06-04 11:49:24,984:INFO: Summary name Max Q is illegal; using Max_Q instead.
+2021-06-04 11:49:24,986:INFO: Summary name Std Q is illegal; using Std_Q instead.
+2021-06-04 11:49:24,988:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
+2021-06-04 11:49:33,842:INFO: Evaluating...

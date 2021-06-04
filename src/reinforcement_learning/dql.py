@@ -4,13 +4,14 @@ from abc import ABC
 from collections import deque
 
 import gym
+import pickle
 
 from reinforcement_learning.utils.preprocess import greyscale
 from reinforcement_learning.utils.wrappers import PreproWrapper, MaxAndSkipEnv
 
 from utilities.general import get_logger, Progbar, export_plot
-from utilities.replay_buffer import SimpleReplayBuffer as ReplayBuffer
-import tensorflow as tf
+from utilities.replay_buffer import ReplayBuffer
+import tensorflow.compat.v1 as tf
 import tensorflow.contrib.layers as layers
 import numpy as np
 
@@ -20,7 +21,7 @@ class QN(object):
     Abstract Class for implementing a Q Network
     """
 
-    def __init__(self, env, config, logger=None):
+    def __init__(self, env, config, logger=None, load=False):
         """
         Initialize Q Network and env
 
@@ -40,9 +41,9 @@ class QN(object):
         self.env = env
 
         # build model
-        self.build()
+        self.build(load=load)
 
-    def build(self):
+    def build(self, load=False):
         """
         Build model
         """
@@ -61,6 +62,12 @@ class QN(object):
 
         Args:
             model_path: (string) directory
+        """
+        pass
+
+    def load(self):
+        """
+        loads pretrained model
         """
         pass
 
@@ -88,7 +95,7 @@ class QN(object):
         Args:
             state: observation from gym
         """
-        if np.random.random() < self.config.soft_epsilon:
+        if np.random.random() < 1 - self.config.soft_epsilon:
             return self.env.action_space.sample()
         else:
             return self.get_best_action(state)[0]
@@ -329,8 +336,8 @@ class QN(object):
             exp_schedule: exploration strategy for epsilon
             lr_schedule: schedule for learning rate
         """
-        # initialize
-        self.initialize()
+        # # initialize
+        # self.initialize()
 
         # record one game at the beginning
         if self.config.record:
@@ -350,7 +357,61 @@ class DQN(QN):
     """
 
     def add_placeholders_op(self):
-        raise NotImplementedError
+        """
+        Adds placeholders to the graph
+
+        These placeholders are used as inputs by the rest of the model building and will be fed
+        data during training.  Note that when "None" is in a placeholder's shape, it's flexible
+        (so we can use different batch sizes without rebuilding the model
+        """
+        # this information might be useful
+        # here, typically, a state shape is (80, 80, 1)
+        state_shape = list(self.env.observation_space.shape)
+        state_shape[-1] = state_shape[-1] * self.config.state_history
+
+        action_dim = self.env.action_space.n
+
+        ##############################################################
+        """
+        TODO: add placeholders:
+              Remember that we stack 4 consecutive frames together, ending up with an input of shape
+              (80, 80, 4).
+               - self.s: batch of states, type = uint8
+                         shape = (batch_size, img height, img width, nchannels x config.state_history)
+               - self.a: batch of actions, type = int32
+                         shape = (batch_size)
+               - self.r: batch of rewards, type = float32
+                         shape = (batch_size)
+               - self.sp: batch of next states, type = uint8
+                         shape = (batch_size, img height, img width, nchannels x config.state_history)
+               - self.done_mask: batch of done, type = bool
+                         shape = (batch_size)
+                         note that this placeholder contains bool = True only if we are done in 
+                         the relevant transition
+               - self.lr: learning rate, type = float32
+        
+        (Don't change the variable names!)
+        
+        HINT: variables from config are accessible with self.config.variable_name
+              Also, you may want to use a dynamic dimension for the batch dimension.
+              Check the use of None for tensorflow placeholders.
+
+              you can also use the state_shape computed above.
+        """
+        ##############################################################
+        ################YOUR CODE HERE (6-15 lines) ##################
+        # img_height, img_width, nchannels = state_shape[0], state_shape[1], state_shape[2]
+        self.s = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape], name='state')
+        self.a = tf.placeholder(dtype=tf.int32, shape=[None], name='action')
+        self.r = tf.placeholder(dtype=tf.float32, shape=[None], name='reward')
+        self.sp = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape], name='next_state')
+        self.done_mask = tf.placeholder(dtype=tf.bool, shape=[None], name='done_mask')
+        self.lr = tf.placeholder(dtype=tf.float32, shape=(), name='lr')
+
+        self.loss = tf.placeholder(dtype=tf.float32, shape=(), name='loss')
+
+        ##############################################################
+        ######################## END YOUR CODE #######################
 
     def get_q_values_op(self, scope, reuse=False):
         """
@@ -399,50 +460,55 @@ class DQN(QN):
 
         return state
 
-    def build(self):
+    def build(self, load=False):
         """
         Build model by adding all necessary variables
         """
-        # add placeholders
-        self.add_placeholders_op()
+        if not load:
+            # add placeholders
+            self.add_placeholders_op()
+            s = self.process_state(self.s)
 
-        # compute Q values of state
-        s = self.process_state(self.s)
-        self.q = self.get_q_values_op(s, scope="q", reuse=False)
+            # compute Q values of state
+            self.q = self.get_q_values_op(s, scope="q", reuse=False)
 
-        # compute Q values of next state
-        sp = self.process_state(self.sp)
-        self.target_q = self.get_q_values_op(sp, scope="target_q", reuse=False)
+            # compute Q values of next state
+            sp = self.process_state(self.sp)
+            self.target_q = self.get_q_values_op(sp, scope="target_q", reuse=False)
 
-        # add update operator for target network
-        self.add_update_target_op("q", "target_q")
+            # add square loss
+            self.add_loss_op(self.q, self.target_q)
 
-        # add square loss
-        self.add_loss_op(self.q, self.target_q)
+            # add update operator for target network
+            self.add_update_target_op("q", "target_q")
 
-        # add optmizer for the main networks
-        self.add_optimizer_op("q")
+            # add optmizer for the main networks
+            self.add_optimizer_op("q")
 
-    def initialize(self):
+            self.initialize(load=load)
+        else:
+            self.load()
+
+    def initialize(self, load=False):
         """
         Assumes the graph has been constructed
         Creates a tf Session and run initializer of variables
         """
-        # create tf session
-        self.sess = tf.Session()
+        if not load:
+            # create tf session
+            self.sess = tf.Session()
 
-        # tensorboard stuff
-        self.add_summary()
+            # tensorboard stuff
+            self.add_summary()
+            # initiliaze all variables
+            init = tf.global_variables_initializer()
+            self.sess.run(init)
 
-        # initiliaze all variables
-        init = tf.global_variables_initializer()
-        self.sess.run(init)
+            # synchronise q and target_q networks
+            self.sess.run(self.update_target_op)
 
-        # synchronise q and target_q networks
-        self.sess.run(self.update_target_op)
-
-        # for saving networks weights
-        self.saver = tf.train.Saver()
+            # for saving networks weights
+            self.saver = tf.train.Saver(save_relative_paths=True)
 
     def add_summary(self):
         """
@@ -486,7 +552,32 @@ class DQN(QN):
         if not os.path.exists(self.config.model_output):
             os.makedirs(self.config.model_output)
 
-        self.saver.save(self.sess, self.config.model_output)
+        self.saver.save(self.sess, f'{self.config.model_output}/model')
+
+    def load(self):
+        """
+        loads pretrained model
+        """
+        self.sess = tf.Session()
+
+        self.saver = tf.train.import_meta_graph(f'{self.config.model_output}/model.meta')
+        self.saver.restore(self.sess, tf.train.latest_checkpoint(f'{self.config.model_output}'))
+        graph = tf.get_default_graph()
+
+        self.s = graph.get_tensor_by_name("state:0")
+        self.a = graph.get_tensor_by_name("action:0")
+        self.r = graph.get_tensor_by_name('reward:0')
+        self.sp = graph.get_tensor_by_name('next_state:0')
+        self.done_mask = graph.get_tensor_by_name('done_mask:0')
+        self.lr = graph.get_tensor_by_name('lr:0')
+
+        self.q = graph.get_tensor_by_name('q/fully_connected_1/BiasAdd:0')
+        self.target_q = graph.get_tensor_by_name('target_q/fully_connected_1/BiasAdd:0')
+
+        self.loss = graph.get_tensor_by_name('loss_1:0')
+
+        self.train_op = graph.get_operation_by_name('train_op')
+        self.grad_norm = graph.get_tensor_by_name('grad_norm/global_norm:0')
 
     def get_best_action(self, state):
         """
@@ -498,7 +589,7 @@ class DQN(QN):
             action: (int)
             action_values: (np array) q values for all actions
         """
-        action_values = self.sess.run(self.q, feed_dict={self.s: [state]})[0]
+        action_values = self.sess.run(self.q, feed_dict={self.s: [state]})
         return np.argmax(action_values), action_values
 
     def update_step(self, t, replay_buffer, lr):
@@ -550,60 +641,8 @@ class DQN(QN):
 
 
 class QLearning(DQN, ABC):
-    def __init__(self, env, config, logger=None):
-        super().__init__(env, config, logger=None)
-
-    def add_placeholders_op(self):
-        """
-        Adds placeholders to the graph
-
-        These placeholders are used as inputs by the rest of the model building and will be fed
-        data during training.  Note that when "None" is in a placeholder's shape, it's flexible
-        (so we can use different batch sizes without rebuilding the model
-        """
-        # this information might be useful
-        # here, typically, a state shape is (80, 80, 1)
-        state_shape = list(self.env.observation_space.shape)
-
-        ##############################################################
-        """
-        TODO: add placeholders:
-              Remember that we stack 4 consecutive frames together, ending up with an input of shape
-              (80, 80, 4).
-               - self.s: batch of states, type = uint8
-                         shape = (batch_size, img height, img width, nchannels x config.state_history)
-               - self.a: batch of actions, type = int32
-                         shape = (batch_size)
-               - self.r: batch of rewards, type = float32
-                         shape = (batch_size)
-               - self.sp: batch of next states, type = uint8
-                         shape = (batch_size, img height, img width, nchannels x config.state_history)
-               - self.done_mask: batch of done, type = bool
-                         shape = (batch_size)
-                         note that this placeholder contains bool = True only if we are done in 
-                         the relevant transition
-               - self.lr: learning rate, type = float32
-        
-        (Don't change the variable names!)
-        
-        HINT: variables from config are accessible with self.config.variable_name
-              Also, you may want to use a dynamic dimension for the batch dimension.
-              Check the use of None for tensorflow placeholders.
-
-              you can also use the state_shape computed above.
-        """
-        ##############################################################
-        ################YOUR CODE HERE (6-15 lines) ##################
-        # img_height, img_width, nchannels = state_shape[0], state_shape[1], state_shape[2]
-        self.s = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape],name='state')
-        self.a = tf.placeholder(dtype=tf.int32, shape=[None], name='action')
-        self.r = tf.placeholder(dtype=tf.float32, shape=[None], name='reward')
-        self.sp = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape],name='next_state')
-        self.done_mask = tf.placeholder(dtype=tf.bool, shape=[None], name='done_mask')
-        self.lr = tf.placeholder(dtype=tf.float32, shape=(), name='lr')
-
-        ##############################################################
-        ######################## END YOUR CODE #######################
+    def __init__(self, env, config, logger=None, load=False):
+        super().__init__(env, config, logger, load)
 
     # # batch of current states
     # self.s = tf.placeholder(tf.float32, tuple([None] + state_shape))
@@ -663,13 +702,15 @@ class QLearning(DQN, ABC):
         ##############################################################
         ################ YOUR CODE HERE - 10-15 lines ################
         with tf.variable_scope(scope, reuse=reuse) as _:
-            # out = layers.conv2d(out, num_outputs=32, kernel_size=8, stride=4)
-            # out = layers.conv2d(out, num_outputs=64, kernel_size=4, stride=2)
-            # out = layers.conv2d(out, num_outputs=64, kernel_size=3, stride=1)
-            # out = layers.flatten(out)
-            out = layers.fully_connected(out, num_outputs=512)
-            out = layers.fully_connected(out, num_outputs=512)
-            out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
+            X = layers.conv2d(state, 32, 8, stride=4, )
+            X = layers.conv2d(X, 64, 4, stride=2, )
+            X = layers.conv2d(X, 64, 3, stride=1, )
+            X = layers.flatten(X)
+            X = layers.fully_connected(X, 512)
+            out = layers.fully_connected(X, num_actions, activation_fn=None)
+            # out = layers.fully_connected(out, num_outputs=512)
+            # out = layers.fully_connected(out, num_outputs=512)
+            # out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
 
         ##############################################################
         ######################## END YOUR CODE #######################
@@ -716,7 +757,7 @@ class QLearning(DQN, ABC):
         q_collection = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=q_scope)
         target_q_collection = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=target_q_scope)
         op = [tf.assign(target_q_collection[i], q_collection[i]) for i in range(len(q_collection))]
-        self.update_target_op = tf.group(*op)
+        self.update_target_op = tf.group(*op, name='update_target_op')
 
         ##############################################################
         ######################## END YOUR CODE #######################
@@ -759,9 +800,14 @@ class QLearning(DQN, ABC):
 
         not_done = 1 - tf.cast(self.done_mask, tf.float32)
         indices = tf.one_hot(self.a, num_actions)
-        q_samp = self.r + not_done * self.config.gamma * tf.reduce_max(target_q, axis=1)
-        q_sa = tf.reduce_sum(q * indices, axis=1)
-        self.loss = tf.reduce_mean((q_samp - q_sa) ** 2)
+
+        if len(target_q.shape) == 1:
+            q_samp = self.r + not_done * self.config.gamma * tf.reduce_max(target_q)
+            q_sa = tf.reduce_sum(q * indices)
+        else:
+            q_samp = self.r + not_done * self.config.gamma * tf.reduce_max(target_q, axis=1)
+            q_sa = tf.reduce_sum(q * indices, axis=1)
+        self.loss = tf.reduce_mean((q_samp - q_sa) ** 2, name='loss')
 
         ##############################################################
         ######################## END YOUR CODE #######################
@@ -801,8 +847,12 @@ class QLearning(DQN, ABC):
         scope_variable = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
         grads_and_vars = optimizer.compute_gradients(self.loss, scope_variable)
         if self.config.grad_clip:
-           clipped_grads_and_vars = [(tf.clip_by_norm(item[0],self.config.clip_val),item[1]) for item in grads_and_vars]
-        self.train_op = optimizer.apply_gradients(clipped_grads_and_vars)
-        self.grad_norm = tf.global_norm([item[0] for item in grads_and_vars])
-        ##############################################################
-        ######################## END YOUR CODE #######################
+           grads_and_vars = [(tf.clip_by_norm(item[0], self.config.clip_val), item[1]) for item in grads_and_vars]
+
+        try:
+            self.train_op = optimizer.apply_gradients(grads_and_vars, name='train_op')
+            self.grad_norm = tf.global_norm([item[0] for item in grads_and_vars], name='grad_norm')
+        except ValueError as e:
+            pass
+        except Exception as e:
+            raise e
