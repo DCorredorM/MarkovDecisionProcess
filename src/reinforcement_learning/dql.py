@@ -127,7 +127,7 @@ class QN(object):
         Args:
             state: observation from gym
         """
-        if np.random.random() < 1 - self.config.soft_epsilon:
+        if np.random.random() < self.config.soft_epsilon:
             return self.env.action_space.sample()
         else:
             return self.get_best_action(state)[0]
@@ -188,6 +188,7 @@ class QN(object):
         # state = np.cast(state, tf.float32)
         # state /= self.config.high
         state = state.astype(np.float32)
+        state /= self.config.high
 
         return state
 

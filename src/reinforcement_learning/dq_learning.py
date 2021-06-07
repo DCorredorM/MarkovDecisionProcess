@@ -75,15 +75,15 @@ class QLearning(QN):
             predictions = tf.reduce_sum(predictions * indices, axis=1)
 
             target = self.compute_targets(s, a, r, sp, done_mask)
-            prediction_loss = self.loss(target, predictions)
+            prediction_loss = tf.reduce_mean((target - predictions) ** 2)
 
-        gradients = tape.gradient(prediction_loss, self.q_model.trainable_variables)
+            gradients = tape.gradient(prediction_loss, self.q_model.trainable_variables)
 
-        if self.config.grad_clip:
-            gradients = [tf.clip_by_norm(item, self.config.clip_val) for item in gradients]
+            if self.config.grad_clip:
+                gradients = [tf.clip_by_norm(item, self.config.clip_val) for item in gradients]
 
-        self.optimizer.apply_gradients(zip(gradients, self.q_model.trainable_variables))
-        self.grad_norm = tf.linalg.global_norm([item[0] for item in gradients])
+            self.optimizer.apply_gradients(zip(gradients, self.q_model.trainable_variables))
+            self.grad_norm = tf.linalg.global_norm([item[0] for item in gradients])
 
         return prediction_loss
 
