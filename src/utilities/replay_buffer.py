@@ -161,7 +161,7 @@ class ReplayBuffer(object):
             Index at which the frame is stored. To be used for `store_effect` later.
         """
 		if self.obs is None:
-			self.obs = np.empty([self.size] + list(frame.shape), dtype=np.uint8)
+			self.obs = np.empty([self.size] + list(frame.shape), dtype=np.float32)
 			self.action = np.empty([self.size], dtype=np.int32)
 			self.reward = np.empty([self.size], dtype=np.float32)
 			self.done = np.empty([self.size], dtype=np.bool)

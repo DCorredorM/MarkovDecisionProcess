@@ -11,8 +11,13 @@ from reinforcement_learning.utils.wrappers import PreproWrapper, MaxAndSkipEnv
 
 from utilities.general import get_logger, Progbar, export_plot
 from utilities.replay_buffer import ReplayBuffer
-import tensorflow.compat.v1 as tf
-import tensorflow.contrib.layers as layers
+
+# from keras.models import Sequential
+from tensorflow.keras.layers import Input
+from tensorflow.keras.models import Sequential
+
+import tensorflow as tf
+
 import numpy as np
 
 
@@ -49,6 +54,33 @@ class QN(object):
         """
         pass
 
+    def _check_layer_arg(self, layer, arg, default):
+        lay, kwargas = layer
+        if kwargas.get(arg) != default:
+            kwargas[arg] = default
+            self.logger.info(f'Argument: {arg}, changed to default ({default}) value to match environment.')
+        return lay, kwargas
+
+    def _create_net(self, net_config):
+        # creates the neural network
+        net = Sequential()
+
+        state_shape = list(self.env.observation_space.shape)
+        state_shape[-1] = state_shape[-1] * self.config.state_history
+        # first layer needs to have accurate input dimension
+        net.add(self.config.layer('input')(input_shape=state_shape))
+
+        # last layer needs to have a linear activation and accurate output dimension,
+        # i.e., it needs to be a probability distribution over the action space
+        net_config[-1] = self._check_layer_arg(net_config[-1], 'units', self.env.action_space.n)
+        net_config[-1] = self._check_layer_arg(net_config[-1], 'activation', self.config.last_layer_activation)
+
+        for (layer_type, layer) in net_config:
+            # Creates the current layer.
+            net.add(layer_type(**layer))
+
+        return net
+
     @property
     def policy(self):
         """
@@ -75,7 +107,7 @@ class QN(object):
         """
         Initialize variables if necessary
         """
-        pass
+        raise NotImplementedError
 
     def get_best_action(self, state):
         """
@@ -141,6 +173,24 @@ class QN(object):
         if len(scores_eval) > 0:
             self.eval_reward = scores_eval[-1]
 
+    def process_state(self, state):
+        """
+        Processing of state
+
+        State placeholders are tf.uint8 for fast transfer to GPU
+        Need to cast it to float32 for the rest of the tf graph.
+
+        Args:
+            state: node of tf graph of shape = (batch_size, height, width, nchannels)
+                    of type tf.uint8.
+                    if , values are between 0 and 255 -> 0 and 1
+        """
+        # state = np.cast(state, tf.float32)
+        # state /= self.config.high
+        state = state.astype(np.float32)
+
+        return state
+
     def train(self, exp_schedule, lr_schedule):
         """
         Performs training of Q
@@ -174,7 +224,7 @@ class QN(object):
                 last_record += 1
                 if self.config.render_train: self.env.render()
                 # replay memory stuff
-                idx = replay_buffer.store_frame(state)
+                idx = replay_buffer.store_frame(self.process_state(state))
                 q_input = replay_buffer.encode_recent_observation()
 
                 # chose action according to current Q and exploration
@@ -288,7 +338,7 @@ class QN(object):
                 if self.config.render_test: env.render()
 
                 # store last state in buffer
-                idx = replay_buffer.store_frame(state)
+                idx = replay_buffer.store_frame(self.process_state(state))
                 q_input = replay_buffer.encode_recent_observation()
 
                 action = self.get_action(q_input)
@@ -356,63 +406,6 @@ class DQN(QN):
     Abstract class for Deep Q Learning
     """
 
-    def add_placeholders_op(self):
-        """
-        Adds placeholders to the graph
-
-        These placeholders are used as inputs by the rest of the model building and will be fed
-        data during training.  Note that when "None" is in a placeholder's shape, it's flexible
-        (so we can use different batch sizes without rebuilding the model
-        """
-        # this information might be useful
-        # here, typically, a state shape is (80, 80, 1)
-        state_shape = list(self.env.observation_space.shape)
-        state_shape[-1] = state_shape[-1] * self.config.state_history
-
-        action_dim = self.env.action_space.n
-
-        ##############################################################
-        """
-        TODO: add placeholders:
-              Remember that we stack 4 consecutive frames together, ending up with an input of shape
-              (80, 80, 4).
-               - self.s: batch of states, type = uint8
-                         shape = (batch_size, img height, img width, nchannels x config.state_history)
-               - self.a: batch of actions, type = int32
-                         shape = (batch_size)
-               - self.r: batch of rewards, type = float32
-                         shape = (batch_size)
-               - self.sp: batch of next states, type = uint8
-                         shape = (batch_size, img height, img width, nchannels x config.state_history)
-               - self.done_mask: batch of done, type = bool
-                         shape = (batch_size)
-                         note that this placeholder contains bool = True only if we are done in 
-                         the relevant transition
-               - self.lr: learning rate, type = float32
-        
-        (Don't change the variable names!)
-        
-        HINT: variables from config are accessible with self.config.variable_name
-              Also, you may want to use a dynamic dimension for the batch dimension.
-              Check the use of None for tensorflow placeholders.
-
-              you can also use the state_shape computed above.
-        """
-        ##############################################################
-        ################YOUR CODE HERE (6-15 lines) ##################
-        # img_height, img_width, nchannels = state_shape[0], state_shape[1], state_shape[2]
-        self.s = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape], name='state')
-        self.a = tf.placeholder(dtype=tf.int32, shape=[None], name='action')
-        self.r = tf.placeholder(dtype=tf.float32, shape=[None], name='reward')
-        self.sp = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape], name='next_state')
-        self.done_mask = tf.placeholder(dtype=tf.bool, shape=[None], name='done_mask')
-        self.lr = tf.placeholder(dtype=tf.float32, shape=(), name='lr')
-
-        self.loss = tf.placeholder(dtype=tf.float32, shape=(), name='loss')
-
-        ##############################################################
-        ######################## END YOUR CODE #######################
-
     def get_q_values_op(self, scope, reuse=False):
         """
         set Q values, of shape = (batch_size, num_actions)
@@ -442,23 +435,6 @@ class DQN(QN):
         Set training op wrt to loss for variable in scope
         """
         raise NotImplementedError
-
-    def process_state(self, state):
-        """
-        Processing of state
-
-        State placeholders are tf.uint8 for fast transfer to GPU
-        Need to cast it to float32 for the rest of the tf graph.
-
-        Args:
-            state: node of tf graph of shape = (batch_size, height, width, nchannels)
-                    of type tf.uint8.
-                    if , values are between 0 and 255 -> 0 and 1
-        """
-        state = tf.cast(state, tf.float32)
-        state /= self.config.high
-
-        return state
 
     def build(self, load=False):
         """
@@ -657,11 +633,62 @@ class QLearning(DQN, ABC):
     # # learning rate
     # self.lr = tf.placeholder(tf.float32, ())
 
-    def _check_layer_arg(self, layer, arg, default):
-        if layer.get(arg) != default:
-            layer[arg] = default
-            self._logger.info(f'Argument: {arg}, changed to default ({default}) value to match environment.')
-        return layer
+    def add_placeholders_op(self):
+        """
+        Adds placeholders to the graph
+
+        These placeholders are used as inputs by the rest of the model building and will be fed
+        data during training.  Note that when "None" is in a placeholder's shape, it's flexible
+        (so we can use different batch sizes without rebuilding the model
+        """
+        # this information might be useful
+        # here, typically, a state shape is (80, 80, 1)
+        state_shape = list(self.env.observation_space.shape)
+        state_shape[-1] = state_shape[-1] * self.config.state_history
+
+        action_dim = self.env.action_space.n
+
+        ##############################################################
+        """
+        TODO: add placeholders:
+              Remember that we stack 4 consecutive frames together, ending up with an input of shape
+              (80, 80, 4).
+               - self.s: batch of states, type = uint8
+                         shape = (batch_size, img height, img width, nchannels x config.state_history)
+               - self.a: batch of actions, type = int32
+                         shape = (batch_size)
+               - self.r: batch of rewards, type = float32
+                         shape = (batch_size)
+               - self.sp: batch of next states, type = uint8
+                         shape = (batch_size, img height, img width, nchannels x config.state_history)
+               - self.done_mask: batch of done, type = bool
+                         shape = (batch_size)
+                         note that this placeholder contains bool = True only if we are done in 
+                         the relevant transition
+               - self.lr: learning rate, type = float32
+        
+        (Don't change the variable names!)
+        
+        HINT: variables from config are accessible with self.config.variable_name
+              Also, you may want to use a dynamic dimension for the batch dimension.
+              Check the use of None for tensorflow placeholders.
+
+              you can also use the state_shape computed above.
+        """
+        ##############################################################
+        ################YOUR CODE HERE (6-15 lines) ##################
+        # img_height, img_width, nchannels = state_shape[0], state_shape[1], state_shape[2]
+        self.s = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape], name='state')
+        self.a = tf.placeholder(dtype=tf.int32, shape=[None], name='action')
+        self.r = tf.placeholder(dtype=tf.float32, shape=[None], name='reward')
+        self.sp = tf.placeholder(dtype=tf.uint8, shape=[None, *state_shape], name='next_state')
+        self.done_mask = tf.placeholder(dtype=tf.bool, shape=[None], name='done_mask')
+        self.lr = tf.placeholder(dtype=tf.float32, shape=(), name='lr')
+
+        self.loss = tf.placeholder(dtype=tf.float32, shape=(), name='loss')
+
+        ##############################################################
+        ######################## END YOUR CODE #######################
 
     def get_q_values_op(self, state, scope, reuse=False):
         """
@@ -711,6 +738,7 @@ class QLearning(DQN, ABC):
             # out = layers.fully_connected(out, num_outputs=512)
             # out = layers.fully_connected(out, num_outputs=512)
             # out = layers.fully_connected(out, num_outputs=num_actions, activation_fn=None)
+
 
         ##############################################################
         ######################## END YOUR CODE #######################

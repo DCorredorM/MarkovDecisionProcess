@@ -128,3 +128,12 @@ Use tf.where in 2.0, which has the same broadcast rule as np.where
 2021-06-04 11:49:24,986:INFO: Summary name Std Q is illegal; using Std_Q instead.
 2021-06-04 11:49:24,988:INFO: Summary name Eval Reward is illegal; using Eval_Reward instead.
 2021-06-04 11:49:33,842:INFO: Evaluating...
+2021-06-04 12:43:47,569:WARNING: From /Users/davidcorredor/workspace/MDP/src/reinforcement_learning/dql.py:705: conv2d (from tensorflow.python.layers.convolutional) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.keras.layers.Conv2D` instead.
+2021-06-06 12:03:54,054:WARNING: From /Users/davidcorredor/workspace/MDP/src/reinforcement_learning/dql.py:705: conv2d (from tensorflow.python.layers.convolutional) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.keras.layers.Conv2D` instead.
+2021-06-06 12:06:41,968:WARNING: From /Users/davidcorredor/workspace/MDP/src/reinforcement_learning/dql.py:705: conv2d (from tensorflow.python.layers.convolutional) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.keras.layers.Conv2D` instead.

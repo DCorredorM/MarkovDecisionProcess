@@ -1,19 +1,19 @@
-from reinforcement_learning.rl_lib import DPD, RLConfig
+from reinforcement_learning.rl_lib import DPD
+from reinforcement_learning.rl_config import RLConfig
 from reinforcement_learning.agents import NeuralAgent, AgentConfig
 
 from reinforcement_learning.utils.preprocess import greyscale
 from reinforcement_learning.utils.wrappers import PreproWrapper, MaxAndSkipEnv
 
 import gym
-from reinforcement_learning.dql import QLearning
-from reinforcement_learning.rl_lib import RLConfig
+from reinforcement_learning.dq_learning import QLearning
 from reinforcement_learning.test_env import EnvTest
 from reinforcement_learning.rl_utils import LinearSchedule, LinearExploration
 
 
 def dummy_config():
     output_path = "../results/dummy_example/"
-    nsteps_train = 1000
+    nsteps_train = 3000
     config = RLConfig(
         # env config
         render_train=False,
@@ -61,6 +61,7 @@ def dummy_train():
     # env = gym.make('CartPole-v0')
     # env = gym.make('Pendulumgi-v0')
     env = EnvTest((80, 80, 1))
+    # env = EnvTest((5, 5, 1))
 
     config = dummy_config()
     # exploration strategy
@@ -175,7 +176,7 @@ def atari_load():
 
 
 if __name__ == '__main__':
-    # dummy_train()
+    dummy_train()
     # dummy_load()
-    atari_train()
+    # atari_train()
     # atari_load()

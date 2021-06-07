@@ -5,10 +5,7 @@ from abc import abstractmethod, ABC
 # from keras import backend as k
 from gym import Env
 import numpy as np
-import tensorflow.compat.v1 as tf
 import logging
-
-tf.disable_v2_behavior()
 
 
 class AgentConfig:
