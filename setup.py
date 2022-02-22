@@ -1,22 +1,36 @@
-import setuptools
+from setuptools import setup, find_packages
+import os
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+# Fill datafiles you want to deploy
+data_files = []
 
-setuptools.setup(
-    name="mdpy", # Replace with your own username
-    version="0.0.1",
-    author="David Corredor M",
-    author_email="d.corredor@uniandes.edu.co",
-    description="A package for modeling and solving MDPs",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/DCorredorM/MarkovDecisionProcess",
-    packages=setuptools.find_packages(),
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],
-    python_requires='>=3.6',
+
+# List your package requirements.
+requires = []
+
+setup(
+	name='stochoptipy',
+	version='1.0',
+	# declare your packages
+	packages=find_packages(where='src', exclude=("test", )),
+	package_dir={"": "src"},
+	# include data files
+	data_files=data_files,
+	install_requires=requires,
+	# If you want to create a cli list your entry points in the following format:
+	# [console_scripts]
+	# 'command_name' = 'path_to_python_file:function_to_call'
+	entry_points="",
+	# optional: test_command = "your test command"
+	# optional: doc_command = "your doc command"
+
+	# Enable build-time format checking
+	check_format=True,
+	# Enable build-time format checking
+	test_flake8=True,
+	url='',
+	license='',
+	author='David Corredor',
+	author_email='d.corredor@uniandes.edu.co',
+	description=''
 )

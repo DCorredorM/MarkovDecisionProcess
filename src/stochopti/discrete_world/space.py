@@ -22,7 +22,7 @@ class Space:
         Function that given a (state, action) tuple returns the probability distribution of the next state
 
     """
-    def __init__(self, actions, states):
+    def __init__(self, states, actions=None):
         self.A = actions
         self.l_A = len(self.A)
         self.S = states
@@ -35,10 +35,8 @@ class Space:
         self.A_int = {a: i for i, a in enumerate(self.A)}
         self.int_A = {v: k for k, v in self.A_int.items()}
 
-        self.adm_A = NotImplemented
-        self.Q = NotImplemented
-        self.build_admisible_actions()
-        self.build_kernel()
+        self.adm_A = self.build_admisible_actions()
+        self.Q = self.build_kernel()
 
     def _build_A(self):
         A = set()

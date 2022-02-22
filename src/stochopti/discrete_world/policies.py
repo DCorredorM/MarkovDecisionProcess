@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from treelib import Node, Tree
-from discrete_world.space import finiteTimeSpace
+from stochopti.discrete_world.space import finiteTimeSpace
 import torch as pt
 import numpy as np
 import scipy.sparse as sp
@@ -34,7 +34,7 @@ class Policy:
         self.Q = space.Q
 
         if finiteTimeSpace in space.__class__.__bases__:
-            self.T = space.total_time
+            self.T = space.T
 
         self.tree = None
         self.matrix = None

@@ -3,8 +3,8 @@ import numpy as np
 import torch as pt
 import logging
 
-from discrete_world.policies import Policy, DMSPolicy, DMNSPolicy, RMSPolicy
-from discrete_world.space import finiteTimeSpace
+from stochopti.discrete_world.policies import Policy, DMSPolicy, DMNSPolicy, RMSPolicy
+from stochopti.discrete_world.space import finiteTimeSpace
 from utilities.counters import Timer, TallyCounter
 from utilities.utilities import check_kwargs
 
@@ -301,7 +301,7 @@ class finiteTime(MDP):
         if t < self.T:
             if (t, state) not in self.v.keys():
                 def sup(u):
-                    return self.r(t, state, u) + sum(
+                    return self.r(state, u, t) + sum(
                         p * self.optimal_value(t + 1, y)
                         for y, p in self.Q(state, u).items())
 
@@ -312,7 +312,7 @@ class finiteTime(MDP):
             return self.v[t, state]
         else:
             if (t, state) not in self.v.keys():
-                self.v[t, state] = self.r(t, state)
+                self.v[t, state] = self.r(state, t)
                 self.a_policy[t, state] = None
             return self.v[t, state]
 
